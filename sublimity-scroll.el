@@ -51,7 +51,8 @@
 (defun sublimity-scroll--vscroll (lins)
   "FOR ANIMATION USE ONLY"
   (goto-char (window-start))
-  (forward-line lins)
+  ;; (forward-line lins)
+  (evil-line-move lins)
   (set-window-start nil (point)))
 
 (defun sublimity-scroll--hscroll (cols)
@@ -91,14 +92,25 @@
              (append (cl-remove-if 'zerop (sort (fix-list lst) '>))
                      (make-list sublimity-scroll-drift-length 1)))))))
 
+(defun sublimity-get-screen-lins (lins)
+  (save-excursion
+    (forward-line (- lins))
+    (let ((beg (min (+ (point) 1) (point-max))))
+      (forward-line lins)
+      (let ((end (min (+ (point) 1) (point-max))))
+        (count-screen-lines beg end)))))
+
 (defun sublimity-scroll--vscroll-effect (lins)
   (save-excursion
-    (let ((speeds (sublimity-scroll--gen-speeds lins)))
-      (sublimity-scroll--vscroll (- lins))
-      (dolist (speed speeds)
-        (sublimity-scroll--vscroll speed)
-        (force-window-update (selected-window))
-        (redisplay)))))
+    (let* ((scr-lins (sublimity-get-screen-lins lins))
+           (speeds (sublimity-scroll--gen-speeds scr-lins)))
+      ;; (message "%d" scr-lins)
+      ;; (let ()
+        (sublimity-scroll--vscroll (- scr-lins))
+        (dolist (speed speeds)
+          (sublimity-scroll--vscroll speed)
+          (force-window-update (selected-window))
+          (redisplay)))))
 
 (defun sublimity-scroll--hscroll-effect (cols)
   (save-excursion
